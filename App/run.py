@@ -2,7 +2,7 @@ import json
 import pandas as pd
 from flask import Flask, render_template, request
 from plotly.graph_objs import Bar
-from sklearn.externals import joblib
+import joblib
 from sqlalchemy import create_engine
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
@@ -31,14 +31,15 @@ class DisasterResponseApp:
         category_names = df.drop(['id', 'message', 'original', 'genre'], axis=1).columns.tolist()
         return genre_names, genre_counts, category_names, category_counts
 
-    def tokenize(self, text):
+    @staticmethod
+    def tokenize(text):
         tokens = word_tokenize(text)
         lemmatizer = WordNetLemmatizer()
         clean_tokens = [lemmatizer.lemmatize(tok).lower().strip() for tok in tokens]
         return clean_tokens
 
     def predict_classification(self, message):
-        input_message = self.tokenize(message)
+        input_message = DisasterResponseApp.tokenize(message)  # Reference the static method correctly
         prediction = self.model.predict([input_message])[0]
         prediction_labels = list(self.df.columns[4:])
         classification_results = dict(zip(prediction_labels, prediction))
@@ -53,6 +54,10 @@ class DisasterResponseApp:
 @app.route('/')
 @app.route('/index')
 def index():
+    # Create app_instance and load data
+    app_instance = DisasterResponseApp('../data/DisasterResponse.db', '../models/classifier.pkl')
+    app_instance.load_data()
+
     # Load and preprocess data
     genre_names, genre_counts, category_names, category_counts = app_instance.preprocess_data(app_instance.df)
 
@@ -101,6 +106,10 @@ def go():
     # Get user input message
     message = request.form['message']
 
+    # Create app_instance and load model
+    app_instance = DisasterResponseApp('../data/DisasterResponse.db', '../models/classifier.pkl')
+    app_instance.load_model()
+
     # Make prediction
     classification_results = app_instance.predict_classification(message)
 
@@ -109,10 +118,7 @@ def go():
 
 # Main function
 def main():
-    app_instance.run()
+    app.run(host='0.0.0.0', port=3001, debug=True)
 
 if __name__ == '__main__':
-    database_filepath = '../data/DisasterResponse.db'
-    model_filepath = '../models/classifier.joblib'  
-    app_instance = DisasterResponseApp(database_filepath, model_filepath)
     main()
