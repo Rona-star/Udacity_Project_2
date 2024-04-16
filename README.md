@@ -59,7 +59,7 @@ This is where the emergency worker inputs a new message and gets the classificat
 
     'cd app'
     
-4. Go to http://0.0.0.0:3001/
+4. Lastly Visit http://0.0.0.0:3001/
   
 ## Acknowledgements
 Web App Code - Udacity (starter code for the web app)
